@@ -51,7 +51,7 @@ gauge(MetricDataList) when is_list(MetricDataList) ->
     send({metric, {gauge, NormalizedData}});
 gauge(MetricData) when is_tuple(MetricData) ->
     NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {gauge, NormalizedData}}).
+    send({metric, {gauge, [NormalizedData]}}).
 
 -spec gauge(metric_name(), metric_value()) -> ok.
 gauge(Name, Value) when is_number(Value) ->
@@ -71,7 +71,7 @@ counter(MetricDataList) when is_list(MetricDataList) ->
     send({metric, {counter, NormalizedData}});
 counter(MetricData) when is_tuple(MetricData) ->
     NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {counter, NormalizedData}}).
+    send({metric, {counter, [NormalizedData]}}).
 
 -spec counter(metric_name(), metric_value()) -> ok.
 counter(Name, Value) when is_number(Value) ->
@@ -100,7 +100,7 @@ histogram(MetricDataList) when is_list(MetricDataList) ->
     send({metric, {histogram, NormalizedData}});
 histogram(MetricData) when is_tuple(MetricData) ->
     NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {histogram, NormalizedData}}).
+    send({metric, {histogram, [NormalizedData]}}).
 
 -spec histogram(metric_name(), metric_value()) -> ok.
 histogram(Name, Value) when is_number(Value) ->
@@ -121,7 +121,7 @@ timer(MetricDataList) when is_list(MetricDataList) ->
     send({metric, {timer, NormalizedData}});
 timer(MetricData) when is_tuple(MetricData) ->
     NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {timer, NormalizedData}}).
+    send({metric, {timer, [NormalizedData]}}).
 
 -spec timer(metric_name(), metric_value()) -> ok.
 timer(Name, Value) when is_number(Value) ->
@@ -150,7 +150,7 @@ set(MetricDataList) when is_list(MetricDataList) ->
     send({metric, {set, NormalizedData}});
 set(MetricData) when is_tuple(MetricData) ->
     NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {set, NormalizedData}}).
+    send({metric, {set, [NormalizedData]}}).
 
 -spec set(metric_name(), metric_value()) -> ok.
 set(Name, Value) when is_number(Value) ->
