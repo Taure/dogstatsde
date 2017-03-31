@@ -186,7 +186,7 @@ normalize_metric_data({Name, Value, SampleRate}) when is_number(SampleRate) ->
     {Name, Value, SampleRate, #{}};
 normalize_metric_data({Name, Value, Tags}) when is_map(Tags) ->
     {Name, Value, 1.0, Tags};
-normalize_metric_data({_Name, _Value, _SampleRate, _Tags} = AlreadyNormalized) ->
+normalize_metric_data({_, _, _, _} = AlreadyNormalized) ->
     AlreadyNormalized.
 
 %%% Tests
