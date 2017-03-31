@@ -36,13 +36,6 @@
         ,event/1, event/2, event/3, event/4, event/5
         ]).
 
--spec send_metric(metric_type(), [metric_data()]) -> ok.
-send_metric(_Type, []) ->
-    ok;
-send_metric(Type, MetricDataList) ->
-    NormalizedMetricDataList = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
-    send({metric, {Type, NormalizedMetricDataList}}).
-
 -spec send_event(event_title(), event_text(), event_type(), event_priority(), event_tags()) -> ok.
 send_event(Title, Text, Type, Priority, Tags) ->
     send({event, {Title, Text, Type, Priority, Tags}}).
@@ -51,86 +44,125 @@ send_event(Title, Text, Type, Priority, Tags) ->
 send(Data) ->
     wpool:cast(dogstatsd_worker, Data).
 
--define(SPEC_TYPE_1(Type), -spec Type(metric_data() | [metric_data()]) -> ok).
--define(MK_TYPE_1(Type),
-        Type(MetricDataList) when is_list(MetricDataList) ->
-               send_metric(Type, MetricDataList);
-        Type(MetricData) when is_tuple(MetricData) ->
-               send_metric(Type, [MetricData])
-).
--define(SPEC_TYPE_2(Type), -spec Type(metric_name(), metric_value()) -> ok).
--define(MK_TYPE_2(Type),
-        Type(Name, Value) when is_number(Value) ->
-               send_metric(Type, [{Name, Value}])
-).
--define(SPEC_TYPE_3(Type), -spec Type(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok).
--define(MK_TYPE_3(Type),
-        Type(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
-               send_metric(Type, [{Name, Value, SampleRateOrTags}])
-).
--define(SPEC_TYPE_4(Type), -spec Type(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok).
--define(MK_TYPE_4(Type),
-        Type(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
-               send_metric(Type, [{Name, Value, SampleRate, Tags}])
-).
 
--define(ALIAS_TYPE_1(Alias, Real), Alias(A) -> Real(A)).
--define(ALIAS_TYPE_2(Alias, Real), Alias(A, B) -> Real(A, B)).
--define(ALIAS_TYPE_3(Alias, Real), Alias(A, B, C) -> Real(A, B, C)).
--define(ALIAS_TYPE_4(Alias, Real), Alias(A, B, C, D) -> Real(A, B, C, D)).
+-spec gauge(metric_data() | [metric_data()]) -> ok.
+gauge(MetricDataList) when is_list(MetricDataList) ->
+    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
+    send({metric, {gauge, NormalizedData}});
+gauge(MetricData) when is_tuple(MetricData) ->
+    NormalizedData = normalize_metric_data(MetricData),
+    send({metric, {gauge, [NormalizedData]}}).
 
-?SPEC_TYPE_1(gauge).
-?SPEC_TYPE_2(gauge).
-?SPEC_TYPE_3(gauge).
-?SPEC_TYPE_4(gauge).
-?MK_TYPE_1(gauge).
-?MK_TYPE_2(gauge).
-?MK_TYPE_3(gauge).
-?MK_TYPE_4(gauge).
+-spec gauge(metric_name(), metric_value()) -> ok.
+gauge(Name, Value) when is_number(Value) ->
+    gauge({Name, Value}).
 
-?SPEC_TYPE_1(counter).
-?SPEC_TYPE_2(counter).
-?SPEC_TYPE_3(counter).
-?SPEC_TYPE_4(counter).
-?MK_TYPE_1(counter).
-?MK_TYPE_2(counter).
-?MK_TYPE_3(counter).
-?MK_TYPE_4(counter).
-?ALIAS_TYPE_1(increment, counter).
-?ALIAS_TYPE_2(increment, counter).
-?ALIAS_TYPE_3(increment, counter).
-?ALIAS_TYPE_4(increment, counter).
+-spec gauge(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
+gauge(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
+    gauge({Name, Value, SampleRateOrTags}).
 
-?SPEC_TYPE_1(histogram).
-?SPEC_TYPE_2(histogram).
-?SPEC_TYPE_3(histogram).
-?SPEC_TYPE_4(histogram).
-?MK_TYPE_1(histogram).
-?MK_TYPE_2(histogram).
-?MK_TYPE_3(histogram).
-?MK_TYPE_4(histogram).
+-spec gauge(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
+gauge(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
+    gauge({Name, Value, SampleRate, Tags}).
 
-?SPEC_TYPE_1(timer).
-?SPEC_TYPE_2(timer).
-?SPEC_TYPE_3(timer).
-?SPEC_TYPE_4(timer).
-?MK_TYPE_1(timer).
-?MK_TYPE_2(timer).
-?MK_TYPE_3(timer).
-?MK_TYPE_4(timer).
-?ALIAS_TYPE_1(timing, timer).
-?ALIAS_TYPE_2(timing, timer).
-?ALIAS_TYPE_3(timing, timer).
-?ALIAS_TYPE_4(timing, timer).
+-spec counter(metric_data() | [metric_data()]) -> ok.
+counter(MetricDataList) when is_list(MetricDataList) ->
+    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
+    send({metric, {counter, NormalizedData}});
+counter(MetricData) when is_tuple(MetricData) ->
+    NormalizedData = normalize_metric_data(MetricData),
+    send({metric, {counter, [NormalizedData]}}).
 
-?SPEC_TYPE_1(set).
-?SPEC_TYPE_2(set).
-?SPEC_TYPE_3(set).
-?SPEC_TYPE_4(set).
-?MK_TYPE_1(set).
-?MK_TYPE_2(set).
-?MK_TYPE_3(set).
-?MK_TYPE_4(set).
+-spec counter(metric_name(), metric_value()) -> ok.
+counter(Name, Value) when is_number(Value) ->
+    counter({Name, Value}).
+
+-spec counter(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
+counter(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
+    counter({Name, Value, SampleRateOrTags}).
+
+-spec counter(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
+counter(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
+    counter({Name, Value, SampleRate, Tags}).
+
+increment(A) ->
+    counter(A).
+increment(A, B) ->
+    counter(A, B).
+increment(A, B, C) ->
+    counter(A, B, C).
+increment(A, B, C, D) ->
+    counter(A, B, C, D).
+
+-spec histogram(metric_data() | [metric_data()]) -> ok.
+histogram(MetricDataList) when is_list(MetricDataList) ->
+    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
+    send({metric, {histogram, NormalizedData}});
+histogram(MetricData) when is_tuple(MetricData) ->
+    NormalizedData = normalize_metric_data(MetricData),
+    send({metric, {histogram, [NormalizedData]}}).
+
+-spec histogram(metric_name(), metric_value()) -> ok.
+histogram(Name, Value) when is_number(Value) ->
+    histogram({Name, Value}).
+
+-spec histogram(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
+histogram(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
+    histogram({Name, Value, SampleRateOrTags}).
+
+-spec histogram(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
+histogram(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
+    histogram({Name, Value, SampleRate, Tags}).
+
+
+-spec timer(metric_data() | [metric_data()]) -> ok.
+timer(MetricDataList) when is_list(MetricDataList) ->
+    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
+    send({metric, {timer, NormalizedData}});
+timer(MetricData) when is_tuple(MetricData) ->
+    NormalizedData = normalize_metric_data(MetricData),
+    send({metric, {timer, [NormalizedData]}}).
+
+-spec timer(metric_name(), metric_value()) -> ok.
+timer(Name, Value) when is_number(Value) ->
+    timer({Name, Value}).
+
+-spec timer(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
+timer(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
+    timer({Name, Value, SampleRateOrTags}).
+
+-spec timer(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
+timer(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
+    timer({Name, Value, SampleRate, Tags}).
+
+timing(A) ->
+    timer(A).
+timing(A, B) ->
+    timer(A, B).
+timing(A, B, C) ->
+    timer(A, B, C).
+timing(A, B, C, D) ->
+    timer(A, B, C, D).
+
+-spec set(metric_data() | [metric_data()]) -> ok.
+set(MetricDataList) when is_list(MetricDataList) ->
+    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
+    send({metric, {set, NormalizedData}});
+set(MetricData) when is_tuple(MetricData) ->
+    NormalizedData = normalize_metric_data(MetricData),
+    send({metric, {set, [NormalizedData]}}).
+
+-spec set(metric_name(), metric_value()) -> ok.
+set(Name, Value) when is_number(Value) ->
+    set({Name, Value}).
+
+-spec set(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
+set(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
+    set({Name, Value, SampleRateOrTags}).
+
+-spec set(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
+set(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
+    set({Name, Value, SampleRate, Tags}).
 
 -spec event(event_title()) -> ok.
 event(Title) -> event(Title, "").
@@ -154,7 +186,7 @@ normalize_metric_data({Name, Value, SampleRate}) when is_number(SampleRate) ->
     {Name, Value, SampleRate, #{}};
 normalize_metric_data({Name, Value, Tags}) when is_map(Tags) ->
     {Name, Value, 1.0, Tags};
-normalize_metric_data({_Name, _Value, _SampleRate, _Tags} = AlreadyNormalized) ->
+normalize_metric_data({_, _, _, _} = AlreadyNormalized) ->
     AlreadyNormalized.
 
 %%% Tests
