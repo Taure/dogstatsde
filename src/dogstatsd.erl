@@ -75,7 +75,8 @@ counter(MetricData) when is_tuple(MetricData) ->
 
 -spec counter(metric_name(), metric_value()) -> ok.
 counter(Name, Value) when is_number(Value) ->
-    counter({Name, Value}).
+    Data = [{Name, Value}],
+    send({metric, {counter, Data}}).
 
 -spec counter(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
 counter(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->

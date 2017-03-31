@@ -80,9 +80,11 @@ build_metric_lines({Type, NormalizedMetricDataList}, State) ->
         NormalizedMetricDataList
     ).
 
+build_metric_line(Type, {Name, Value}, State) ->
+    LineStart = [prepend_global_prefix(Name, State), <<":">>, to_binary(Value), <<"|">>, metric_type_to_str(Type)],
+    [LineStart];
 build_metric_line(Type, {Name, Value, SampleRate, Tags}, State) ->
-    LineStart = io_lib:format("~s:~.3f|~s|@~.2f", [prepend_global_prefix(Name, State), float(Value),
-                                                    metric_type_to_str(Type), float(SampleRate)]),
+    LineStart = [prepend_global_prefix(Name, State), <<":">>, to_binary(Value), <<"|">>, metric_type_to_str(Type), <<"|@">>, to_binary(SampleRate)],
     TagLine = build_tag_line(Tags, State),
     [LineStart, TagLine].
 
@@ -161,14 +163,31 @@ build_lines_test_() ->
         begin
             Type2 = histogram,
             Name2 = ["mymetric_", [<<"name">>]],
-            Value2 = 28.0,
+            Value2 = 28,
             SampleRate2 = 12,
             Tags2 = #{"version" => 42},
 
-            ExpectedLine2 = <<"test_global_prefix.mymetric_name:28.000|h|@12.00|#test:true,version:42">>,
+            ExpectedLine2 = <<"test_global_prefix.mymetric_name:28|h|@12|#test:true,version:42">>,
             [ActualLine2] = build_lines({metric, {Type2, [{Name2, Value2, SampleRate2, Tags2}]}}, State),
 
             ?_assertEqual(ExpectedLine2, iolist_to_binary(ActualLine2))
+        end},
+      {"for a metric 2 value",
+        begin
+            Type2 = histogram,
+            Name2 = ["mymetric_", [<<"name">>]],
+            Value2 = 28,
+
+            ExpectedLine3 = <<"test_global_prefix.mymetric_name:28|h">>,
+            [ActualLine3] = build_lines({metric, {Type2, [{Name2, Value2}]}}, State),
+
+            ?_assertEqual(ExpectedLine3, iolist_to_binary(ActualLine3))
         end}].
 
 -endif.
+
+
+to_binary(Value) when is_integer(Value) ->
+    integer_to_binary(Value);
+to_binary(Value) when is_float(Value) ->
+    float_to_binary(Value).
