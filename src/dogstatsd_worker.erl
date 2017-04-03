@@ -74,15 +74,20 @@ build_lines({event, Data}, State) ->
 
 build_metric_line(Type, {Name, Value}, State) ->
     Name2 = prepend_global_prefix(Name, State),
-    LineStart = [Name2, <<":">>, number_to_binary(Value), <<"|">>, metric_type(Type)],
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type)],
     [LineStart];
 build_metric_line(Type, {Name, Value, SampleRate}, State) ->
     Name2 = prepend_global_prefix(Name, State),
-    LineStart = [Name2, <<":">>, number_to_binary(Value), <<"|">>, metric_type(Type), <<"|@">>, number_to_binary(SampleRate)],
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type), <<"|@">>, SampleRate],
     [LineStart];
+build_metric_line(Type, {Name, Value, undefined, Tags}, State) ->
+    Name2 = prepend_global_prefix(Name, State),
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type)],
+    TagLine = build_tag_line(Tags, State),
+    [LineStart, TagLine];
 build_metric_line(Type, {Name, Value, SampleRate, Tags}, State) ->
     Name2 = prepend_global_prefix(Name, State),
-    LineStart = [Name2, <<":">>, number_to_binary(Value), <<"|">>, metric_type(Type), <<"|@">>, number_to_binary(SampleRate)],
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type), <<"|@">>, SampleRate],
     TagLine = build_tag_line(Tags, State),
     [LineStart, TagLine].
 
@@ -172,7 +177,3 @@ build_lines_test_() ->
 -endif.
 
 
-number_to_binary(Value) when is_integer(Value) ->
-    integer_to_binary(Value);
-number_to_binary(Value) when is_float(Value) ->
-    float_to_binary(Value).

@@ -168,12 +168,14 @@ set(Name, Value, Rate) ->
 set(Name, Value, Rate, Tags) ->
     metric_data(set, {Name, Value, Rate, Tags}).
 
-metric_data(Type, {_, _} = Data) ->
-    send({metric, {Type, Data}});
-metric_data(Type, {_, _, _} = Data) ->
-    send({metric, {Type, Data}});
-metric_data(Type, {_, _, __, _} = Data) ->
-    send({metric, {Type, Data}}).
+metric_data(Type, {Name, Value}) ->
+    send({metric, {Type, {Name, number_to_binary(Value)}}});
+metric_data(Type, {Name, Value, Rate}) ->
+    send({metric, {Type, {Name, number_to_binary(Value), number_to_binary(Rate)}}});
+metric_data(Type, {Name, Value, undefined, Tags}) ->
+    send({metric, {Type, {Name, number_to_binary(Value), undefined, Tags}}});
+metric_data(Type, {Name, Value, Rate, Tags}) ->
+    send({metric, {Type, {Name, number_to_binary(Value), number_to_binary(Rate), Tags}}}).
 
 
 -spec event(event_title()) -> ok.
@@ -187,6 +189,12 @@ event(Title, Text, Type, Priority) -> event(Title, Text, Type, Priority, #{}).
 -spec event(event_title(), event_text(), event_type(), event_priority(), event_tags()) -> ok.
 event(Title, Text, Type, Priority, Tags) ->
     send_event(Title, Text, Type, Priority, Tags).
+
+number_to_binary(Value) when is_integer(Value) ->
+    integer_to_binary(Value);
+number_to_binary(Value) when is_float(Value) ->
+    float_to_binary(Value).
+
 
 %%%===================================================================
 %%% Internal functions
@@ -209,7 +217,7 @@ gauge_test_() ->
      [
       ?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1))
      ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, 0.5))
-     ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, #{baz => qux}))
+     ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, undefined, #{baz => qux}))
      ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, 0.25, #{baz => qux}))
      ,?_assertError(function_clause, dogstatsd:gauge("foo.bar", #{baz => qux}))
      ,?_assertError(function_clause, dogstatsd:gauge("foo.bar", #{baz => qux}, 0.5))
@@ -219,15 +227,5 @@ gauge_test_() ->
      ,?_assertError(function_clause, dogstatsd:gauge([{"foo.bar", 1, 0.5, #{foo => bar}},
                                                       {"foo.bar", 1, "hello"}]))
      ]}.
-
-normalize_metric_data_test_() ->
-    [
-     ?_assertEqual({"key", "value", 1.0, #{}}, normalize_metric_data({"key", "value"}))
-    ,?_assertEqual({"key", "value", 12, #{}}, normalize_metric_data({"key", "value", 12}))
-    ,?_assertEqual({"key", "value", 1.0, #{foo => bar}},
-                   normalize_metric_data({"key", "value", #{foo => bar}}))
-    ,?_assertEqual({"key", "value", 12, #{foo => bar}},
-                   normalize_metric_data({"key", "value", 12, #{foo => bar}}))
-    ].
 
 -endif.
