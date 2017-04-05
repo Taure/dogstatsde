@@ -52,8 +52,8 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Data, #state{socket = no_send} = State) ->
     {noreply, State};
 handle_cast(Data, State) ->
-    Lines = build_lines(Data, State),
-    ok = send_lines(Lines, State),
+    Line = build_lines(Data, State),
+    ok = send_line(Line, State),
     {noreply, State}.
 
 handle_info(_Info, State) ->
@@ -67,24 +67,30 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-build_lines({metric, Data}, State) ->
-    build_metric_lines(Data, State);
+build_lines({metric, {Type, MetricData}}, State) ->
+    build_metric_line(Type, MetricData, State);
 build_lines({event, Data}, State) ->
     [build_event_line(Data, State)].
 
-build_metric_lines({Type, NormalizedMetricDataList}, State) ->
-    lists:map(
-        fun(NormalizedMetricData) ->
-            build_metric_line(Type, NormalizedMetricData, State)
-        end,
-        NormalizedMetricDataList
-    ).
-
+build_metric_line(Type, {Name, Value}, State) ->
+    Name2 = prepend_global_prefix(Name, State),
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type)],
+    [LineStart];
+build_metric_line(Type, {Name, Value, SampleRate}, State) ->
+    Name2 = prepend_global_prefix(Name, State),
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type), <<"|@">>, SampleRate],
+    [LineStart];
+build_metric_line(Type, {Name, Value, undefined, Tags}, State) ->
+    Name2 = prepend_global_prefix(Name, State),
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type)],
+    TagLine = build_tag_line(Tags, State),
+    [LineStart, TagLine];
 build_metric_line(Type, {Name, Value, SampleRate, Tags}, State) ->
-    LineStart = io_lib:format("~s:~.3f|~s|@~.2f", [prepend_global_prefix(Name, State), float(Value),
-                                                    metric_type_to_str(Type), float(SampleRate)]),
+    Name2 = prepend_global_prefix(Name, State),
+    LineStart = [Name2, <<":">>, Value, <<"|">>, metric_type(Type), <<"|@">>, SampleRate],
     TagLine = build_tag_line(Tags, State),
     [LineStart, TagLine].
+
 
 prepend_global_prefix(Name, #state{prefix=""}) -> Name;
 prepend_global_prefix(Name, #state{prefix=GlobalPrefix}) -> [GlobalPrefix, $., Name].
@@ -108,17 +114,14 @@ build_tag_line(Tags, #state{tags=GlobalTags}) ->
               [],
               maps:merge(GlobalTags, Tags)).
 
-send_lines(Lines, #state{socket = Socket, host = Host, port = Port}) ->
-    ok = lists:foreach(
-        fun(Line) -> ok = gen_udp:send(Socket, Host, Port, Line) end,
-        Lines
-    ).
+send_line(Line, #state{socket = Socket, host = Host, port = Port}) ->
+    ok = gen_udp:send(Socket, Host, Port, Line).
 
-metric_type_to_str(counter) -> "c";
-metric_type_to_str(gauge) -> "g";
-metric_type_to_str(histogram) -> "h";
-metric_type_to_str(timer) -> "ms";
-metric_type_to_str(set) -> "s".
+metric_type(counter) -> <<"c">>;
+metric_type(gauge) -> <<"g">>;
+metric_type(histogram) -> <<"h">>;
+metric_type(timer) -> <<"ms">>;
+metric_type(set) -> <<"s">>.
 
 kv(K, V) when is_atom(K) ->
     kv(atom_to_list(K), V);
@@ -172,3 +175,5 @@ build_lines_test_() ->
         end}].
 
 -endif.
+
+

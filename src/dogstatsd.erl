@@ -46,44 +46,47 @@ send(Data) ->
 
 
 -spec gauge(metric_data() | [metric_data()]) -> ok.
-gauge(MetricDataList) when is_list(MetricDataList) ->
-    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
-    send({metric, {gauge, NormalizedData}});
-gauge(MetricData) when is_tuple(MetricData) ->
-    NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {gauge, [NormalizedData]}}).
+gauge([]) ->
+    ok;
+gauge([H|T]) ->
+    metric_data(gauge, H),
+    gauge(T);
+gauge(Data) when is_tuple(Data) ->
+    metric_data(gauge, Data).
 
 -spec gauge(metric_name(), metric_value()) -> ok.
-gauge(Name, Value) when is_number(Value) ->
-    gauge({Name, Value}).
+gauge(Name, Value) ->
+    metric_data(gauge, {Name, Value}).
 
--spec gauge(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
-gauge(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
-    gauge({Name, Value, SampleRateOrTags}).
+-spec gauge(metric_name(), metric_value(), metric_sample_rate()) -> ok.
+gauge(Name, Value, Rate) ->
+    metric_data(gauge, {Name, Value, Rate}).
 
 -spec gauge(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
-gauge(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
-    gauge({Name, Value, SampleRate, Tags}).
+gauge(Name, Value, Rate, Tags) ->
+    metric_data(gauge, {Name, Value, Rate, Tags}).
 
 -spec counter(metric_data() | [metric_data()]) -> ok.
-counter(MetricDataList) when is_list(MetricDataList) ->
-    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
-    send({metric, {counter, NormalizedData}});
-counter(MetricData) when is_tuple(MetricData) ->
-    NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {counter, [NormalizedData]}}).
+counter([]) ->
+    ok;
+counter([H|T]) ->
+    metric_data(counter, H),
+    counter(T);
+
+counter(Data) when is_tuple(Data) ->
+    metric_data(counter, Data).
 
 -spec counter(metric_name(), metric_value()) -> ok.
-counter(Name, Value) when is_number(Value) ->
-    counter({Name, Value}).
+counter(Name, Value) ->
+    metric_data(counter, {Name, Value}).
 
 -spec counter(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
-counter(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
-    counter({Name, Value, SampleRateOrTags}).
+counter(Name, Value, Rate) ->
+    metric_data(counter, {Name, Value, Rate}).
 
 -spec counter(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
-counter(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
-    counter({Name, Value, SampleRate, Tags}).
+counter(Name, Value, Rate, Tags) ->
+    metric_data(counter, {Name, Value, Rate, Tags}).
 
 increment(A) ->
     counter(A).
@@ -95,45 +98,45 @@ increment(A, B, C, D) ->
     counter(A, B, C, D).
 
 -spec histogram(metric_data() | [metric_data()]) -> ok.
-histogram(MetricDataList) when is_list(MetricDataList) ->
-    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
-    send({metric, {histogram, NormalizedData}});
-histogram(MetricData) when is_tuple(MetricData) ->
-    NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {histogram, [NormalizedData]}}).
-
+histogram([]) ->
+    ok;
+histogram([H|T]) ->
+    metric_data(histogram, H),
+    histogram(T);
+histogram(Data) when is_tuple(Data) ->
+    metric_data(histogram, Data).
 -spec histogram(metric_name(), metric_value()) -> ok.
 histogram(Name, Value) when is_number(Value) ->
-    histogram({Name, Value}).
+    metric_data(histogram, {Name, Value}).
 
--spec histogram(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
-histogram(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
-    histogram({Name, Value, SampleRateOrTags}).
+-spec histogram(metric_name(), metric_value(), metric_sample_rate()) -> ok.
+histogram(Name, Value, Rate) ->
+    metric_data(histogram, {Name, Value, Rate}).
 
 -spec histogram(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
-histogram(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
-    histogram({Name, Value, SampleRate, Tags}).
-
+histogram(Name, Value, Rate, Tags) ->
+    metric_data(histogram, {Name, Value, Rate, Tags}).
 
 -spec timer(metric_data() | [metric_data()]) -> ok.
-timer(MetricDataList) when is_list(MetricDataList) ->
-    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
-    send({metric, {timer, NormalizedData}});
-timer(MetricData) when is_tuple(MetricData) ->
-    NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {timer, [NormalizedData]}}).
+timer([]) ->
+    ok;
+timer([H|T]) ->
+    metric_data(timer, H),
+    timer(T);
+timer(Data) when is_tuple(Data) ->
+    metric_data(timer, Data).
 
 -spec timer(metric_name(), metric_value()) -> ok.
-timer(Name, Value) when is_number(Value) ->
-    timer({Name, Value}).
+timer(Name, Value) ->
+    metric_data(timer, {Name, Value}).
 
--spec timer(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
-timer(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
-    timer({Name, Value, SampleRateOrTags}).
+-spec timer(metric_name(), metric_value(), metric_sample_rate()) -> ok.
+timer(Name, Value, Rate) ->
+    metric_data(timer, {Name, Value, Rate}).
 
 -spec timer(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
-timer(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
-    timer({Name, Value, SampleRate, Tags}).
+timer(Name, Value, Rate, Tags) ->
+    metric_data(timer, {Name, Value, Rate, Tags}).
 
 timing(A) ->
     timer(A).
@@ -145,24 +148,35 @@ timing(A, B, C, D) ->
     timer(A, B, C, D).
 
 -spec set(metric_data() | [metric_data()]) -> ok.
-set(MetricDataList) when is_list(MetricDataList) ->
-    NormalizedData = [normalize_metric_data(MetricData) || MetricData <- MetricDataList],
-    send({metric, {set, NormalizedData}});
-set(MetricData) when is_tuple(MetricData) ->
-    NormalizedData = normalize_metric_data(MetricData),
-    send({metric, {set, [NormalizedData]}}).
+set([]) ->
+    ok;
+set([H|T]) ->
+    metric_data(set, H),
+    set(T);
+set(Data) when is_tuple(Data) ->
+    metric_data(set, Data).
 
 -spec set(metric_name(), metric_value()) -> ok.
-set(Name, Value) when is_number(Value) ->
-    set({Name, Value}).
+set(Name, Value) ->
+    metric_data(set, {Name, Value}).
 
--spec set(metric_name(), metric_value(), metric_sample_rate()|metric_tags()) -> ok.
-set(Name, Value, SampleRateOrTags) when is_number(Value) andalso (is_number(SampleRateOrTags) orelse is_map(SampleRateOrTags)) ->
-    set({Name, Value, SampleRateOrTags}).
+-spec set(metric_name(), metric_value(), metric_sample_rate()) -> ok.
+set(Name, Value, Rate) ->
+    metric_data(set, {Name, Value, Rate}).
 
 -spec set(metric_name(), metric_value(), metric_sample_rate(), metric_tags()) -> ok.
-set(Name, Value, SampleRate, Tags) when is_number(SampleRate), is_map(Tags) ->
-    set({Name, Value, SampleRate, Tags}).
+set(Name, Value, Rate, Tags) ->
+    metric_data(set, {Name, Value, Rate, Tags}).
+
+metric_data(Type, {Name, Value}) ->
+    send({metric, {Type, {Name, number_to_binary(Value)}}});
+metric_data(Type, {Name, Value, Rate}) ->
+    send({metric, {Type, {Name, number_to_binary(Value), number_to_binary(Rate)}}});
+metric_data(Type, {Name, Value, undefined, Tags}) ->
+    send({metric, {Type, {Name, number_to_binary(Value), undefined, Tags}}});
+metric_data(Type, {Name, Value, Rate, Tags}) ->
+    send({metric, {Type, {Name, number_to_binary(Value), number_to_binary(Rate), Tags}}}).
+
 
 -spec event(event_title()) -> ok.
 event(Title) -> event(Title, "").
@@ -176,19 +190,15 @@ event(Title, Text, Type, Priority) -> event(Title, Text, Type, Priority, #{}).
 event(Title, Text, Type, Priority, Tags) ->
     send_event(Title, Text, Type, Priority, Tags).
 
+number_to_binary(Value) when is_integer(Value) ->
+    integer_to_binary(Value);
+number_to_binary(Value) when is_float(Value) ->
+    float_to_binary(Value).
+
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-
-normalize_metric_data({Name, Value}) ->
-    {Name, Value, 1.0, #{}};
-normalize_metric_data({Name, Value, SampleRate}) when is_number(SampleRate) ->
-    {Name, Value, SampleRate, #{}};
-normalize_metric_data({Name, Value, Tags}) when is_map(Tags) ->
-    {Name, Value, 1.0, Tags};
-normalize_metric_data({_, _, _, _} = AlreadyNormalized) ->
-    AlreadyNormalized.
-
 %%% Tests
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
@@ -207,7 +217,7 @@ gauge_test_() ->
      [
       ?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1))
      ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, 0.5))
-     ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, #{baz => qux}))
+     ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, undefined, #{baz => qux}))
      ,?_assertEqual(ok, dogstatsd:gauge("foo.bar", 1, 0.25, #{baz => qux}))
      ,?_assertError(function_clause, dogstatsd:gauge("foo.bar", #{baz => qux}))
      ,?_assertError(function_clause, dogstatsd:gauge("foo.bar", #{baz => qux}, 0.5))
@@ -217,15 +227,5 @@ gauge_test_() ->
      ,?_assertError(function_clause, dogstatsd:gauge([{"foo.bar", 1, 0.5, #{foo => bar}},
                                                       {"foo.bar", 1, "hello"}]))
      ]}.
-
-normalize_metric_data_test_() ->
-    [
-     ?_assertEqual({"key", "value", 1.0, #{}}, normalize_metric_data({"key", "value"}))
-    ,?_assertEqual({"key", "value", 12, #{}}, normalize_metric_data({"key", "value", 12}))
-    ,?_assertEqual({"key", "value", 1.0, #{foo => bar}},
-                   normalize_metric_data({"key", "value", #{foo => bar}}))
-    ,?_assertEqual({"key", "value", 12, #{foo => bar}},
-                   normalize_metric_data({"key", "value", 12, #{foo => bar}}))
-    ].
 
 -endif.
